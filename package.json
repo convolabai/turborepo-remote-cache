@@ -45,6 +45,7 @@
     "url": "git+https://github.com/ducktors/turborepo-remote-cache.git"
   },
   "dependencies": {
+    "@azure/functions": "^4.6.1",
     "@azure/storage-blob": "^12.23.0",
     "@fastify/aws-lambda": "^5.0.0",
     "@fastify/jwt": "9.0.1",
@@ -111,5 +112,6 @@
     "api",
     "dist",
     "vercel.json"
-  ]
+  ],
+  "packageManager": "pnpm@10.5.2"
 }

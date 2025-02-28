@@ -3,6 +3,7 @@
   "extends": "@ducktors/tsconfig",
   "compilerOptions": {
     "outDir": "dist",
+    "lib": ["esnext", "dom"],
     "inlineSourceMap": true,
     "declaration": false,
     "noImplicitAny": false
