@@ -1,6 +1,5 @@
 import { Readable } from 'stream'
 import { Cookie, HttpHandler, HttpResponseInit } from '@azure/functions'
-import { LambdaFastifyOptions } from '@fastify/aws-lambda'
 import { FastifyInstance, InjectOptions } from 'fastify'
 import { createApp } from './app.js'
 
@@ -21,11 +20,7 @@ async function convertToNodeReadable(
   })
 }
 
-const azureFunctionFastify = (
-  app: FastifyInstance,
-  options: LambdaFastifyOptions = {},
-) => {
-  const binaryMimes = options.binaryMimeTypes || []
+const azureFunctionFastify = (app: FastifyInstance) => {
   const handler: HttpHandler = async (request, context) => {
     const method = request.method
     const url = request.url
@@ -52,6 +47,7 @@ const azureFunctionFastify = (
       )
       return p
     })()
+
     const prom = new Promise<HttpResponseInit>((resolve, reject) => {
       app.inject(
         {
@@ -70,20 +66,30 @@ const azureFunctionFastify = (
             })
           } else {
             let payload
-            if (
-              typeof res?.headers['content-type'] === 'string' &&
-              binaryMimes.includes(res.headers['content-type'])
-            ) {
-              payload = res?.rawPayload
-            } else {
-              payload = res?.payload
-            }
-
             const headers: Record<string, string> = {}
 
             for (const key in res?.headers) {
               headers[key] = `${res?.headers[key]}`
             }
+
+            const isOctetStream =
+              headers['content-type'] === 'application/octet-stream'
+
+            console.debug('isOctetStream', isOctetStream)
+            if (isOctetStream) {
+              payload = res?.stream()
+            } else {
+              payload = res?.payload
+            }
+
+            context.debug('payload', payload)
+
+            if (isOctetStream) {
+              headers['content-length'] = `${res?.rawPayload?.length}`
+              Reflect.deleteProperty(headers, 'transfer-encoding')
+            }
+
+            context.debug('headers', headers)
 
             resolve({
               status: res?.statusCode,
@@ -104,4 +110,4 @@ const app = createApp({
   trustProxy: true,
 })
 
-export const handler = azureFunctionFastify(app, { enforceBase64: (_) => true })
+export const handler = azureFunctionFastify(app)
