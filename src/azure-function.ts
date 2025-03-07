@@ -88,7 +88,6 @@ const azureFunctionFastify = (
             resolve({
               status: res?.statusCode,
               body: payload,
-              jsonBody: res?.json(),
               headers: headers,
               cookies: res?.cookies as Cookie[],
             })
